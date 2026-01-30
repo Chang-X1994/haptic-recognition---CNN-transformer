@@ -1,1 +1,46 @@
-this paper is under review
+def split_samples_subframe(df):
+    """
+    Return:
+    lists: touches without padding values, shape (M, N, 8，8), cannot convert to ndarray because N is not fixed.
+    """
+    first_four_columns = df.iloc[:, :4]
+    remaining_columns = df.iloc[:, -64:]
+    # print(remaining_columns.shape)  # (249696, 64) 原始数据训练集列表//  (108432, 64) 原始数据测试集列表
+    # 归一化处理
+    data = remaining_columns.values.astype(float)
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    normalized_data = (data - mean) / std
+    # normalized_remaining_columns = pd.DataFrame(normalized_data, columns=remaining_columns.columns)
+    normalized_remaining_columns = normalized_data.reshape(-1, 8, 8)
+    # normalized_df = pd.concat([first_four_columns, normalized_remaining_columns], axis=1)
+    # 归一化处理
+    touches = []
+    gestures = []
+    num_frames = 432
+    for i in range(0, len(normalized_remaining_columns), num_frames):
+        if i + num_frames <= len(normalized_remaining_columns):
+            touches.append(normalized_remaining_columns[i:i+num_frames])
+            gestures.append(first_four_columns.iloc[i, 3])
+    return touches, gestures
+
+
+def window_data(touches_data, gestures_data, window_size, stride_size):
+    # 这个方法 是把数据变成 window_size = 27为一个窗口。一个窗口间隔stride_size= 9个样本
+    touches_data_windows = []
+    gesture_data_windows = []
+    for touch_sample, gesture in zip(touches_data, gestures_data):
+        sample_num = len(touch_sample)
+        start = 0
+        while start + window_size <= sample_num:
+            window = touch_sample[start:start+window_size]
+            touches_data_windows.append(window)
+            gesture_data_windows.append(gesture)
+            start += stride_size
+        if start < sample_num:
+            # 防止stride_size > window_size
+            window = np.zeros((window_size, 8, 8))
+            window[:sample_num - start] = touch_sample[start:sample_num]
+            touches_data_windows.append(window)
+            gesture_data_windows.append(gesture)
+    return np.array(touches_data_windows), np.array(gesture_data_windows)this paper is under review
