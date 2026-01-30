@@ -5,8 +5,7 @@ def split_samples_subframe(df):
     """
     first_four_columns = df.iloc[:, :4]
     remaining_columns = df.iloc[:, -64:]
-    # print(remaining_columns.shape)  # (249696, 64) 原始数据训练集列表//  (108432, 64) 原始数据测试集列表
-    # 归一化处理
+    # print(remaining_columns.shape)  # (249696, 64) 
     data = remaining_columns.values.astype(float)
     mean = np.mean(data, axis=0)
     std = np.std(data, axis=0)
@@ -14,7 +13,6 @@ def split_samples_subframe(df):
     # normalized_remaining_columns = pd.DataFrame(normalized_data, columns=remaining_columns.columns)
     normalized_remaining_columns = normalized_data.reshape(-1, 8, 8)
     # normalized_df = pd.concat([first_four_columns, normalized_remaining_columns], axis=1)
-    # 归一化处理
     touches = []
     gestures = []
     num_frames = 432
@@ -24,9 +22,7 @@ def split_samples_subframe(df):
             gestures.append(first_four_columns.iloc[i, 3])
     return touches, gestures
 
-
 def window_data(touches_data, gestures_data, window_size, stride_size):
-    # 这个方法 是把数据变成 window_size = 27为一个窗口。一个窗口间隔stride_size= 9个样本
     touches_data_windows = []
     gesture_data_windows = []
     for touch_sample, gesture in zip(touches_data, gestures_data):
@@ -38,7 +34,7 @@ def window_data(touches_data, gestures_data, window_size, stride_size):
             gesture_data_windows.append(gesture)
             start += stride_size
         if start < sample_num:
-            # 防止stride_size > window_size
+            # stride_size > window_size
             window = np.zeros((window_size, 8, 8))
             window[:sample_num - start] = touch_sample[start:sample_num]
             touches_data_windows.append(window)
